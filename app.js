@@ -166,6 +166,7 @@ const feedbackBox = document.getElementById("feedbackBox");
 const feedbackResult = document.getElementById("feedbackResult");
 const feedbackKwQ = document.getElementById("feedbackKwQ");
 const feedbackKwA = document.getElementById("feedbackKwA");
+const feedbackQuestionKo = document.getElementById("feedbackQuestionKo");
 const feedbackExplanationEn = document.getElementById("feedbackExplanationEn");
 const feedbackExplanationKo = document.getElementById("feedbackExplanationKo");
 const submitBtn = document.getElementById("submitBtn");
@@ -315,13 +316,10 @@ function renderQuestion() {
   const isMulti = q.answer.length > 1;
   const prevSelected = session.selected[q.id] || [];
 
-  const shuffledLetters = shuffle(Object.keys(q.options));
-  shuffledLetters.forEach((letter, i) => {
-    const text = q.options[letter];
-    const displayLabel = String.fromCharCode(65 + i); // A, B, C... position for THIS render
+  Object.entries(q.options).forEach(([letter, text]) => {
     const item = document.createElement("label");
     item.className = "option-item";
-    item.dataset.letter = letter; // original key, used for grading regardless of display order
+    item.dataset.letter = letter;
     const input = document.createElement("input");
     input.type = isMulti ? "checkbox" : "radio";
     input.name = "opt";
@@ -331,7 +329,7 @@ function renderQuestion() {
     input.addEventListener("change", () => onOptionChange(letter, isMulti));
     const letterSpan = document.createElement("span");
     letterSpan.className = "option-letter";
-    letterSpan.textContent = displayLabel + ".";
+    letterSpan.textContent = letter + ".";
     const textSpan = document.createElement("span");
     textSpan.className = "option-text";
     textSpan.textContent = text;
@@ -402,9 +400,10 @@ function showFeedback(q, sel, isCorrect) {
   feedbackResult.className = "feedback-result " + (isCorrect ? "good" : "bad");
   feedbackResult.textContent = isCorrect
     ? "정답입니다!"
-    : `오답입니다. 정답: ${q.answer.map(l => q.options[l]).join(" / ")}`;
+    : `오답입니다. 정답: ${q.answer.join(", ")}`;
   feedbackKwQ.textContent = q.kw_q || "-";
   feedbackKwA.textContent = q.kw_a || "-";
+  feedbackQuestionKo.textContent = (q.question_ko && q.question_ko.trim()) ? q.question_ko : NO_EXPLANATION_MSG;
   feedbackExplanationEn.textContent = (q.explanation_en && q.explanation_en.trim()) ? q.explanation_en : NO_EXPLANATION_MSG;
   feedbackExplanationKo.textContent = (q.explanation_ko && q.explanation_ko.trim()) ? q.explanation_ko : NO_EXPLANATION_MSG;
 
@@ -494,6 +493,7 @@ function renderResult(entry) {
 
     const explEn = (q.explanation_en && q.explanation_en.trim()) ? q.explanation_en : NO_EXPLANATION_MSG;
     const explKo = (q.explanation_ko && q.explanation_ko.trim()) ? q.explanation_ko : NO_EXPLANATION_MSG;
+    const questionKo = (q.question_ko && q.question_ko.trim()) ? q.question_ko : NO_EXPLANATION_MSG;
 
     const item = document.createElement("div");
     item.className = "result-detail-item";
@@ -503,13 +503,15 @@ function renderResult(entry) {
         <span class="rd-q">문제 ${q.id}. ${q.question}</span>
       </div>
       <div class="rd-body">
-        <div class="rd-answer-line"><b>내 답:</b> ${selected.length ? selected.map(l => q.options[l] || l).join(" / ") : "(미응답)"}</div>
-        <div class="rd-answer-line"><b>정답:</b> ${q.answer.map(l => q.options[l]).join(" / ")}</div>
+        <div class="rd-answer-line"><b>내 답:</b> ${selected.length ? selected.join(", ") : "(미응답)"}</div>
+        <div class="rd-answer-line"><b>정답:</b> ${q.answer.join(", ")}</div>
         <div class="keyword-row">
           <span class="keyword-tag kw-q"><b>문제 키워드</b> ${q.kw_q || "-"}</span>
           <span class="keyword-tag kw-a"><b>답변 키워드</b> ${q.kw_a || "-"}</span>
         </div>
         <div class="feedback-explanation">
+          <h3>문제 (한글)</h3>
+          <p>${questionKo}</p>
           <h3>해설 (EN)</h3>
           <p>${explEn}</p>
           <h3>해설 (한글)</h3>
