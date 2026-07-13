@@ -40,6 +40,78 @@ function updateStreak(qid, isCorrect) {
   saveStreaks(streaks);
 }
 
+/* ===================== Backup export / import ===================== */
+function exportBackup() {
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    history: loadHistory(),
+    wrongSet: loadWrongSet(),
+    streaks: loadStreaks(),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `cccs_backup_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function mergeHistory(a, b) {
+  const seen = new Set();
+  const result = [];
+  [...a, ...b].forEach(entry => {
+    if (seen.has(entry.id)) return;
+    seen.add(entry.id);
+    result.push(entry);
+  });
+  result.sort((x, y) => new Date(x.date) - new Date(y.date));
+  return result;
+}
+function mergeWrongSet(a, b) {
+  const merged = { ...a };
+  Object.entries(b).forEach(([qid, val]) => {
+    const prev = merged[qid];
+    if (!prev || (val.count || 0) > (prev.count || 0)) merged[qid] = val;
+  });
+  return merged;
+}
+function mergeStreaks(a, b) {
+  const merged = { ...a };
+  Object.entries(b).forEach(([qid, val]) => {
+    merged[qid] = Math.max(merged[qid] || 0, val || 0);
+  });
+  return merged;
+}
+
+function importBackup(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try {
+      data = JSON.parse(reader.result);
+    } catch (e) {
+      alert("올바른 백업 파일이 아닙니다.");
+      return;
+    }
+    if (!data || typeof data !== "object") {
+      alert("올바른 백업 파일이 아닙니다.");
+      return;
+    }
+    const addedHistory = (data.history || []).length;
+    saveHistory(mergeHistory(loadHistory(), data.history || []));
+    saveWrongSet(mergeWrongSet(loadWrongSet(), data.wrongSet || {}));
+    saveStreaks(mergeStreaks(loadStreaks(), data.streaks || {}));
+    renderHome();
+    alert(`가져오기 완료: 백업 속 기록 ${addedHistory}건을 현재 기록과 병합했습니다.`);
+  };
+  reader.readAsText(file);
+}
+
 /* ===================== Utilities ===================== */
 function shuffle(arr) {
   const a = arr.slice();
@@ -182,6 +254,20 @@ document.getElementById("clearHistoryBtn").addEventListener("click", () => {
     saveHistory([]);
     renderHome();
   }
+});
+
+document.getElementById("exportBtn").addEventListener("click", () => {
+  exportBackup();
+});
+
+const importFileInput = document.getElementById("importFileInput");
+document.getElementById("importBtn").addEventListener("click", () => {
+  importFileInput.click();
+});
+importFileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) importBackup(file);
+  e.target.value = "";
 });
 
 document.getElementById("resetMasteryBtn").addEventListener("click", () => {

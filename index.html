@@ -49,7 +49,12 @@
     <section class="history-section">
       <div class="history-header">
         <h2>테스트 이력</h2>
-        <button id="clearHistoryBtn" class="btn-ghost">기록 전체 삭제</button>
+        <div class="history-header-actions">
+          <button id="exportBtn" class="btn-ghost">기록 내보내기</button>
+          <button id="importBtn" class="btn-ghost">기록 가져오기</button>
+          <input type="file" id="importFileInput" accept="application/json" hidden>
+          <button id="clearHistoryBtn" class="btn-ghost">기록 전체 삭제</button>
+        </div>
       </div>
       <div id="historyList" class="history-list">
         <p class="empty-msg">아직 응시 기록이 없습니다.</p>

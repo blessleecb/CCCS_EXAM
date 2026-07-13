@@ -78,9 +78,12 @@ body {
 .history-section { margin-top: 20px; }
 .history-header {
   display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 12px;
 }
 .history-header h2 { font-size: 18px; margin: 0; }
+.history-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .history-list { display: flex; flex-direction: column; gap: 8px; }
 .empty-msg { color: var(--text-dim); font-size: 14px; }
