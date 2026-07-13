@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCCS-203b 문제풀이</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ===================== HOME ===================== -->
+  <section id="view-home" class="view">
+    <header class="hero">
+      <h1>CCCS-203b 문제풀이</h1>
+      <p class="subtitle">CrowdStrike Certified Cloud Specialist · 총 <span id="totalCount">0</span>문제</p>
+    </header>
+
+    <div class="pool-status">
+      <span>학습 풀 <b id="poolCount">0</b> / <span id="poolTotal">0</span></span>
+      <span class="pool-sep">·</span>
+      <span>마스터 완료 <b id="masteredCount">0</b>개</span>
+      <button id="resetMasteryBtn" class="btn-ghost">마스터리 초기화</button>
+    </div>
+
+    <div class="mode-grid">
+      <button class="mode-card" data-mode="exam">
+        <div class="mode-icon">📝</div>
+        <div class="mode-title">실전 모의고사</div>
+        <div class="mode-desc">학습 풀 중 랜덤 <span id="examCountDesc">60</span>문제<br>모든 문제를 푼 뒤 채점 &amp; 해설</div>
+      </button>
+      <button class="mode-card" data-mode="random">
+        <div class="mode-icon">🎲</div>
+        <div class="mode-title">랜덤 테스트</div>
+        <div class="mode-desc">학습 풀 중 랜덤 <span id="randomCountDesc">20</span>문제<br>문제마다 바로 정답/해설 확인</div>
+      </button>
+      <button class="mode-card" data-mode="all">
+        <div class="mode-icon">📚</div>
+        <div class="mode-title">전체 문제 풀이</div>
+        <div class="mode-desc">학습 풀 <span id="allCountDesc">367</span>문제를 순서대로<br>문제마다 바로 정답/해설 확인</div>
+      </button>
+      <button class="mode-card" id="wrongNoteCard" data-mode="wrong">
+        <div class="mode-icon">🗒️</div>
+        <div class="mode-title">오답노트</div>
+        <div class="mode-desc">틀렸던 문제만 모아 다시 풀기<br><span id="wrongCount">0</span>문제 저장됨</div>
+      </button>
+    </div>
+
+    <section class="history-section">
+      <div class="history-header">
+        <h2>테스트 이력</h2>
+        <button id="clearHistoryBtn" class="btn-ghost">기록 전체 삭제</button>
+      </div>
+      <div id="historyList" class="history-list">
+        <p class="empty-msg">아직 응시 기록이 없습니다.</p>
+      </div>
+    </section>
+  </section>
+
+  <!-- ===================== QUIZ ===================== -->
+  <section id="view-quiz" class="view" hidden>
+    <div class="quiz-topbar">
+      <button id="quitQuizBtn" class="btn-ghost">← 그만두기</button>
+      <div class="quiz-progress">
+        <span id="progressText">1 / 60</span>
+        <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+      </div>
+      <div class="quiz-score" id="liveScore"></div>
+    </div>
+
+    <div class="question-card">
+      <div class="question-meta">
+        <span id="qBadge" class="badge"></span>
+        <span id="qMultiHint" class="hint" hidden>※ 정답이 2개 이상입니다. 모두 선택하세요.</span>
+      </div>
+      <h2 id="qText" class="q-text"></h2>
+      <div id="optionsList" class="options-list"></div>
+
+      <div id="feedbackBox" class="feedback-box" hidden>
+        <div id="feedbackResult" class="feedback-result"></div>
+        <div class="keyword-row">
+          <span class="keyword-tag kw-q"><b>문제 키워드</b> <span id="feedbackKwQ"></span></span>
+          <span class="keyword-tag kw-a"><b>답변 키워드</b> <span id="feedbackKwA"></span></span>
+        </div>
+        <div class="feedback-explanation">
+          <h3>해설 (EN)</h3>
+          <p id="feedbackExplanationEn"></p>
+          <h3>해설 (한글)</h3>
+          <p id="feedbackExplanationKo"></p>
+        </div>
+      </div>
+
+      <div class="quiz-actions">
+        <button id="submitBtn" class="btn-primary">제출</button>
+        <button id="nextBtn" class="btn-primary" hidden>다음 문제</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RESULT ===================== -->
+  <section id="view-result" class="view" hidden>
+    <div class="result-summary">
+      <h1>결과</h1>
+      <div class="score-circle">
+        <span id="resultScore">0%</span>
+      </div>
+      <p id="resultText"></p>
+    </div>
+    <div class="result-actions">
+      <button id="reviewWrongBtn" class="btn-primary" hidden>이 시험의 오답만 다시 풀기</button>
+      <button id="backHomeBtn" class="btn-ghost">홈으로</button>
+    </div>
+    <div id="resultDetailList" class="result-detail-list"></div>
+  </section>
+
+</div>
+
+<script src="questions.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
