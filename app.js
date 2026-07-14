@@ -53,6 +53,16 @@ function getWeakIds() {
     .filter(([, val]) => (val.count || 0) >= WEAK_THRESHOLD)
     .map(([qid]) => Number(qid));
 }
+function getAttemptedIdSet() {
+  const set = new Set();
+  Object.keys(loadAttempted()).forEach(qid => set.add(Number(qid)));
+  Object.keys(loadWrongSet()).forEach(qid => set.add(Number(qid)));
+  Object.keys(loadStreaks()).forEach(qid => set.add(Number(qid)));
+  loadHistory().forEach(entry => {
+    Object.keys(entry.results || {}).forEach(qid => set.add(Number(qid)));
+  });
+  return set;
+}
 function updateStreak(qid, isCorrect) {
   const streaks = loadStreaks();
   streaks[qid] = isCorrect ? (streaks[qid] || 0) + 1 : 0;
@@ -226,7 +236,7 @@ function renderHome() {
   examCountDesc.textContent = Math.min(60, poolIds.length);
   randomCountDesc.textContent = Math.min(20, poolIds.length);
   allCountDesc.textContent = poolIds.length;
-  attemptedCountEl.textContent = Object.keys(loadAttempted()).length;
+  attemptedCountEl.textContent = getAttemptedIdSet().size;
   weakThresholdDescEl.textContent = WEAK_THRESHOLD;
   weakCountEl.textContent = getWeakIds().length;
 
