@@ -205,7 +205,7 @@ const feedbackResult = document.getElementById("feedbackResult");
 const feedbackKwQ = document.getElementById("feedbackKwQ");
 const feedbackKwA = document.getElementById("feedbackKwA");
 const feedbackQuestionKo = document.getElementById("feedbackQuestionKo");
-const feedbackExplanationEn = document.getElementById("feedbackExplanationEn");
+const feedbackOptionsKo = document.getElementById("feedbackOptionsKo");
 const feedbackExplanationKo = document.getElementById("feedbackExplanationKo");
 const submitBtn = document.getElementById("submitBtn");
 const nextBtn = document.getElementById("nextBtn");
@@ -446,6 +446,13 @@ function gradeCurrent() {
 
 const NO_EXPLANATION_MSG = "이 문제는 원본 자료에 별도의 해설이 제공되지 않습니다.";
 
+function getOptionsKoList(q) {
+  return Object.keys(q.options).map(letter => ({
+    letter,
+    text: (q.options_ko && q.options_ko[letter] && q.options_ko[letter].trim()) ? q.options_ko[letter] : NO_EXPLANATION_MSG,
+  }));
+}
+
 function showFeedback(q, sel, isCorrect) {
   feedbackBox.hidden = false;
   feedbackResult.className = "feedback-result " + (isCorrect ? "good" : "bad");
@@ -455,7 +462,17 @@ function showFeedback(q, sel, isCorrect) {
   feedbackKwQ.textContent = q.kw_q || "-";
   feedbackKwA.textContent = q.kw_a || "-";
   feedbackQuestionKo.textContent = (q.question_ko && q.question_ko.trim()) ? q.question_ko : NO_EXPLANATION_MSG;
-  feedbackExplanationEn.textContent = (q.explanation_en && q.explanation_en.trim()) ? q.explanation_en : NO_EXPLANATION_MSG;
+  feedbackOptionsKo.innerHTML = "";
+  getOptionsKoList(q).forEach(({ letter, text }) => {
+    const li = document.createElement("li");
+    const b = document.createElement("b");
+    b.textContent = letter + ".";
+    const span = document.createElement("span");
+    span.textContent = " " + text;
+    li.appendChild(b);
+    li.appendChild(span);
+    feedbackOptionsKo.appendChild(li);
+  });
   feedbackExplanationKo.textContent = (q.explanation_ko && q.explanation_ko.trim()) ? q.explanation_ko : NO_EXPLANATION_MSG;
 
   optionsList.querySelectorAll(".option-item").forEach(el => {
@@ -542,9 +559,11 @@ function renderResult(entry) {
     const isCorrect = r ? r.isCorrect : false;
     const selected = r ? r.selected : [];
 
-    const explEn = (q.explanation_en && q.explanation_en.trim()) ? q.explanation_en : NO_EXPLANATION_MSG;
     const explKo = (q.explanation_ko && q.explanation_ko.trim()) ? q.explanation_ko : NO_EXPLANATION_MSG;
     const questionKo = (q.question_ko && q.question_ko.trim()) ? q.question_ko : NO_EXPLANATION_MSG;
+    const optionsKoHtml = getOptionsKoList(q)
+      .map(({ letter, text }) => `<li><b>${letter}.</b> ${text}</li>`)
+      .join("");
 
     const item = document.createElement("div");
     item.className = "result-detail-item";
@@ -563,8 +582,8 @@ function renderResult(entry) {
         <div class="feedback-explanation">
           <h3>문제 (한글)</h3>
           <p>${questionKo}</p>
-          <h3>해설 (EN)</h3>
-          <p>${explEn}</p>
+          <h3>보기 (한글)</h3>
+          <ul class="options-ko-list">${optionsKoHtml}</ul>
           <h3>해설 (한글)</h3>
           <p>${explKo}</p>
         </div>

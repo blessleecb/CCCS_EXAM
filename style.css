@@ -199,6 +199,9 @@ body {
 .feedback-explanation h3 { font-size: 13px; color: var(--text-dim); margin: 14px 0 6px; text-transform: uppercase; letter-spacing: .04em; }
 .feedback-explanation h3:first-child { margin-top: 0; }
 .feedback-explanation p { line-height: 1.7; white-space: pre-wrap; margin: 0; }
+.options-ko-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.options-ko-list li { line-height: 1.6; }
+.options-ko-list b { color: var(--accent); margin-right: 6px; }
 
 .keyword-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .keyword-tag {
