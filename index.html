@@ -19,6 +19,8 @@
     <div class="pool-status">
       <span>학습 풀 <b id="poolCount">0</b> / <span id="poolTotal">0</span></span>
       <span class="pool-sep">·</span>
+      <span>풀어본 문제 <b id="attemptedCount">0</b>개</span>
+      <span class="pool-sep">·</span>
       <span>마스터 완료 <b id="masteredCount">0</b>개</span>
       <button id="resetMasteryBtn" class="btn-ghost">마스터리 초기화</button>
     </div>
@@ -43,6 +45,11 @@
         <div class="mode-icon">🗒️</div>
         <div class="mode-title">오답노트</div>
         <div class="mode-desc">틀렸던 문제만 모아 다시 풀기<br><span id="wrongCount">0</span>문제 저장됨</div>
+      </button>
+      <button class="mode-card" id="weakPointCard" data-mode="weak">
+        <div class="mode-icon">🎯</div>
+        <div class="mode-title">Weak Point</div>
+        <div class="mode-desc"><span id="weakThresholdDesc">2</span>회 이상 틀린 문제만 모아 풀기<br><span id="weakCount">0</span>문제</div>
       </button>
     </div>
 

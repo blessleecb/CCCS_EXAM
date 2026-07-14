@@ -2,7 +2,9 @@
 const LS_HISTORY = "cccs_history";
 const LS_WRONGSET = "cccs_wrongset";
 const LS_STREAK = "cccs_streak";
+const LS_ATTEMPTED = "cccs_attempted";
 const MASTERY_THRESHOLD = 5;
+const WEAK_THRESHOLD = 2;
 
 function loadHistory() {
   try { return JSON.parse(localStorage.getItem(LS_HISTORY)) || []; }
@@ -22,6 +24,17 @@ function loadStreaks() {
 }
 function saveStreaks(s) { localStorage.setItem(LS_STREAK, JSON.stringify(s)); }
 
+function loadAttempted() {
+  try { return JSON.parse(localStorage.getItem(LS_ATTEMPTED)) || {}; }
+  catch (e) { return {}; }
+}
+function saveAttempted(a) { localStorage.setItem(LS_ATTEMPTED, JSON.stringify(a)); }
+function markAttempted(qid) {
+  const attempted = loadAttempted();
+  attempted[qid] = true;
+  saveAttempted(attempted);
+}
+
 function getMasteredIdSet() {
   const streaks = loadStreaks();
   const mastered = new Set();
@@ -33,6 +46,12 @@ function getMasteredIdSet() {
 function getPoolIds() {
   const mastered = getMasteredIdSet();
   return QUESTIONS.map(q => q.id).filter(id => !mastered.has(id));
+}
+function getWeakIds() {
+  const wrongSet = loadWrongSet();
+  return Object.entries(wrongSet)
+    .filter(([, val]) => (val.count || 0) >= WEAK_THRESHOLD)
+    .map(([qid]) => Number(qid));
 }
 function updateStreak(qid, isCorrect) {
   const streaks = loadStreaks();
@@ -48,6 +67,7 @@ function exportBackup() {
     history: loadHistory(),
     wrongSet: loadWrongSet(),
     streaks: loadStreaks(),
+    attempted: loadAttempted(),
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -87,6 +107,9 @@ function mergeStreaks(a, b) {
   });
   return merged;
 }
+function mergeAttempted(a, b) {
+  return { ...a, ...b };
+}
 
 function importBackup(file) {
   const reader = new FileReader();
@@ -106,6 +129,7 @@ function importBackup(file) {
     saveHistory(mergeHistory(loadHistory(), data.history || []));
     saveWrongSet(mergeWrongSet(loadWrongSet(), data.wrongSet || {}));
     saveStreaks(mergeStreaks(loadStreaks(), data.streaks || {}));
+    saveAttempted(mergeAttempted(loadAttempted(), data.attempted || {}));
     renderHome();
     alert(`가져오기 완료: 백업 속 기록 ${addedHistory}건을 현재 기록과 병합했습니다.`);
   };
@@ -135,6 +159,7 @@ const MODE_LABELS = {
   all: "전체 문제 풀이",
   wrong: "오답노트",
   review: "오답 복습",
+  weak: "Weak Point",
 };
 
 /* ===================== App state ===================== */
@@ -150,7 +175,10 @@ const wrongCountEl = document.getElementById("wrongCount");
 const historyListEl = document.getElementById("historyList");
 const poolCountEl = document.getElementById("poolCount");
 const poolTotalEl = document.getElementById("poolTotal");
+const attemptedCountEl = document.getElementById("attemptedCount");
 const masteredCountEl = document.getElementById("masteredCount");
+const weakCountEl = document.getElementById("weakCount");
+const weakThresholdDescEl = document.getElementById("weakThresholdDesc");
 const examCountDesc = document.getElementById("examCountDesc");
 const randomCountDesc = document.getElementById("randomCountDesc");
 const allCountDesc = document.getElementById("allCountDesc");
@@ -198,6 +226,9 @@ function renderHome() {
   examCountDesc.textContent = Math.min(60, poolIds.length);
   randomCountDesc.textContent = Math.min(20, poolIds.length);
   allCountDesc.textContent = poolIds.length;
+  attemptedCountEl.textContent = Object.keys(loadAttempted()).length;
+  weakThresholdDescEl.textContent = WEAK_THRESHOLD;
+  weakCountEl.textContent = getWeakIds().length;
 
   const history = loadHistory();
   if (history.length === 0) {
@@ -233,6 +264,15 @@ document.querySelectorAll(".mode-card").forEach(card => {
         return;
       }
       startSession("wrong", shuffle(ids));
+      return;
+    }
+    if (mode === "weak") {
+      const ids = getWeakIds();
+      if (ids.length === 0) {
+        alert(`Weak Point 문제가 없습니다. 같은 문제를 ${WEAK_THRESHOLD}회 이상 틀리면 자동으로 여기에 쌓입니다.`);
+        return;
+      }
+      startSession("weak", shuffle(ids));
       return;
     }
     const poolIds = getPoolIds();
@@ -390,6 +430,7 @@ function gradeCurrent() {
   session.results[q.id] = { selected: sel, isCorrect };
   updateWrongSet(q.id, isCorrect);
   updateStreak(q.id, isCorrect);
+  markAttempted(q.id);
   return isCorrect;
 }
 
