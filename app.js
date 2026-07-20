@@ -205,6 +205,7 @@ const statsModal = document.getElementById("statsModal");
 const statsModalCloseBtn = document.getElementById("statsModalCloseBtn");
 const statsTableBody = document.getElementById("statsTableBody");
 
+const finishHereBtn = document.getElementById("finishHereBtn");
 const progressText = document.getElementById("progressText");
 const progressFill = document.getElementById("progressFill");
 const liveScore = document.getElementById("liveScore");
@@ -431,6 +432,7 @@ function startSession(mode, ids) {
     immediate: mode !== "exam",
     questionStartTime: null,
   };
+  finishHereBtn.hidden = mode !== "all";
   showView(viewQuiz);
   renderQuestion();
 }
@@ -625,15 +627,26 @@ document.getElementById("quitQuizBtn").addEventListener("click", () => {
   }
 });
 
+finishHereBtn.addEventListener("click", () => {
+  const gradedCount = Object.keys(session.results).length;
+  if (gradedCount === 0) {
+    alert("아직 채점된 문제가 없습니다. 최소 1문제 이상 풀어야 여기까지 저장할 수 있습니다.");
+    return;
+  }
+  if (confirm(`지금까지 푼 ${gradedCount}문제까지만 기록으로 저장하고 결과를 볼까요?`)) {
+    finishSession();
+  }
+});
+
 /* ===================== Result ===================== */
 function finishSession() {
   stopQuestionTimer();
-  const total = session.ids.length;
   const gradedIds = session.ids.filter(id => session.results[id]);
+  const total = gradedIds.length;
   const correct = gradedIds.filter(id => session.results[id].isCorrect).length;
-  const score = total > 0 ? Math.round((correct / gradedIds.length || 0) * 100) : 0;
+  const score = total > 0 ? Math.round((correct / total) * 100) : 0;
   const totalTimeSec = gradedIds.reduce((sum, id) => sum + (session.results[id].timeSpent || 0), 0);
-  const avgTimeSec = gradedIds.length > 0 ? totalTimeSec / gradedIds.length : 0;
+  const avgTimeSec = total > 0 ? totalTimeSec / total : 0;
 
   const entry = {
     id: Date.now(),
@@ -642,7 +655,7 @@ function finishSession() {
     total,
     correct,
     score,
-    ids: session.ids,
+    ids: gradedIds,
     results: session.results,
     totalTimeSec,
     avgTimeSec,
