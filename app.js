@@ -5,6 +5,7 @@ const LS_STREAK = "cccs_streak";
 const LS_ATTEMPTED = "cccs_attempted";
 const MASTERY_THRESHOLD = 5;
 const WEAK_THRESHOLD = 2;
+const TARGET_SEC_PER_QUESTION = 90; // 실전 시험 60문제/90분 기준, 문제당 1.5분
 
 function loadHistory() {
   try { return JSON.parse(localStorage.getItem(LS_HISTORY)) || []; }
@@ -162,6 +163,12 @@ function sameSet(a, b) {
   return sa === sb;
 }
 function byId(id) { return QUESTIONS.find(q => q.id === id); }
+function formatDuration(totalSeconds) {
+  const s = Math.max(0, Math.round(totalSeconds || 0));
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${String(sec).padStart(2, "0")}`;
+}
 
 const MODE_LABELS = {
   exam: "실전 모의고사",
@@ -197,6 +204,7 @@ const progressText = document.getElementById("progressText");
 const progressFill = document.getElementById("progressFill");
 const liveScore = document.getElementById("liveScore");
 const qBadge = document.getElementById("qBadge");
+const questionTimerEl = document.getElementById("questionTimer");
 const qMultiHint = document.getElementById("qMultiHint");
 const qText = document.getElementById("qText");
 const optionsList = document.getElementById("optionsList");
@@ -204,6 +212,8 @@ const feedbackBox = document.getElementById("feedbackBox");
 const feedbackResult = document.getElementById("feedbackResult");
 const feedbackKwQ = document.getElementById("feedbackKwQ");
 const feedbackKwA = document.getElementById("feedbackKwA");
+const feedbackTimeTag = document.getElementById("feedbackTimeTag");
+const feedbackTimeValue = document.getElementById("feedbackTimeValue");
 const feedbackQuestionKo = document.getElementById("feedbackQuestionKo");
 const feedbackOptionsKo = document.getElementById("feedbackOptionsKo");
 const feedbackExplanationKo = document.getElementById("feedbackExplanationKo");
@@ -212,6 +222,7 @@ const nextBtn = document.getElementById("nextBtn");
 
 const resultScore = document.getElementById("resultScore");
 const resultText = document.getElementById("resultText");
+const resultTimeText = document.getElementById("resultTimeText");
 const resultDetailList = document.getElementById("resultDetailList");
 const reviewWrongBtn = document.getElementById("reviewWrongBtn");
 
@@ -251,9 +262,13 @@ function renderHome() {
       const dt = new Date(entry.date);
       const dateStr = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")} ${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}`;
       const scoreClass = entry.score >= 70 ? "good" : "bad";
+      const timeHtml = entry.totalTimeSec != null
+        ? `<span class="h-time">⏱ ${formatDuration(entry.totalTimeSec)} (평균 ${formatDuration(entry.avgTimeSec)}/문제)</span>`
+        : "";
       div.innerHTML = `
         <span class="h-mode">${MODE_LABELS[entry.mode] || entry.mode}</span>
         <span class="h-date">${dateStr}</span>
+        ${timeHtml}
         <span>${entry.correct}/${entry.total}</span>
         <span class="h-score ${scoreClass}">${entry.score}%</span>
       `;
@@ -328,6 +343,34 @@ document.getElementById("resetMasteryBtn").addEventListener("click", () => {
   }
 });
 
+/* ===================== Question timer ===================== */
+let questionTimerHandle = null;
+
+function getTimerClass(elapsedSec) {
+  if (elapsedSec >= TARGET_SEC_PER_QUESTION) return "timer-over";
+  if (elapsedSec >= TARGET_SEC_PER_QUESTION * 0.7) return "timer-warn";
+  return "";
+}
+function updateQuestionTimerDisplay(elapsedSec) {
+  questionTimerEl.textContent = `⏱ ${formatDuration(elapsedSec)}`;
+  questionTimerEl.className = "question-timer " + getTimerClass(elapsedSec);
+}
+function startQuestionTimer() {
+  stopQuestionTimer();
+  questionTimerEl.hidden = false;
+  session.questionStartTime = Date.now();
+  updateQuestionTimerDisplay(0);
+  questionTimerHandle = setInterval(() => {
+    updateQuestionTimerDisplay((Date.now() - session.questionStartTime) / 1000);
+  }, 1000);
+}
+function stopQuestionTimer() {
+  if (questionTimerHandle) {
+    clearInterval(questionTimerHandle);
+    questionTimerHandle = null;
+  }
+}
+
 /* ===================== Session / Quiz ===================== */
 function startSession(mode, ids) {
   session = {
@@ -335,8 +378,9 @@ function startSession(mode, ids) {
     ids,
     index: 0,
     selected: {},   // qid -> [letters]
-    results: {},    // qid -> {selected, isCorrect}
+    results: {},    // qid -> {selected, isCorrect, timeSpent}
     immediate: mode !== "exam",
+    questionStartTime: null,
   };
   showView(viewQuiz);
   renderQuestion();
@@ -395,6 +439,13 @@ function renderQuestion() {
   nextBtn.hidden = true;
   submitBtn.disabled = prevSelected.length === 0;
 
+  if (alreadyGraded) {
+    stopQuestionTimer();
+    updateQuestionTimerDisplay(alreadyGraded.timeSpent || 0);
+  } else {
+    startQuestionTimer();
+  }
+
   if (session.mode === "exam") {
     submitBtn.textContent = (idx === total - 1) ? "제출하고 채점하기" : "다음 문제";
   } else {
@@ -437,7 +488,9 @@ function gradeCurrent() {
   const q = currentQuestion();
   const sel = session.selected[q.id] || [];
   const isCorrect = sameSet(sel, q.answer);
-  session.results[q.id] = { selected: sel, isCorrect };
+  const timeSpent = session.questionStartTime ? (Date.now() - session.questionStartTime) / 1000 : 0;
+  stopQuestionTimer();
+  session.results[q.id] = { selected: sel, isCorrect, timeSpent };
   updateWrongSet(q.id, isCorrect);
   updateStreak(q.id, isCorrect);
   markAttempted(q.id);
@@ -461,6 +514,10 @@ function showFeedback(q, sel, isCorrect) {
     : `오답입니다. 정답: ${q.answer.join(", ")}`;
   feedbackKwQ.textContent = q.kw_q || "-";
   feedbackKwA.textContent = q.kw_a || "-";
+  const timeSpent = (session.results[q.id] && session.results[q.id].timeSpent) || 0;
+  feedbackTimeValue.textContent = `${formatDuration(timeSpent)} / 목표 ${formatDuration(TARGET_SEC_PER_QUESTION)}`;
+  feedbackTimeTag.classList.remove("time-ok", "time-over");
+  feedbackTimeTag.classList.add(timeSpent <= TARGET_SEC_PER_QUESTION ? "time-ok" : "time-over");
   feedbackQuestionKo.textContent = (q.question_ko && q.question_ko.trim()) ? q.question_ko : NO_EXPLANATION_MSG;
   feedbackOptionsKo.innerHTML = "";
   getOptionsKoList(q).forEach(({ letter, text }) => {
@@ -512,6 +569,7 @@ nextBtn.addEventListener("click", () => {
 
 document.getElementById("quitQuizBtn").addEventListener("click", () => {
   if (confirm("풀이를 그만두고 홈으로 이동할까요? 현재 진행 상황은 저장되지 않습니다.")) {
+    stopQuestionTimer();
     session = null;
     renderHome();
     showView(viewHome);
@@ -520,10 +578,13 @@ document.getElementById("quitQuizBtn").addEventListener("click", () => {
 
 /* ===================== Result ===================== */
 function finishSession() {
+  stopQuestionTimer();
   const total = session.ids.length;
   const gradedIds = session.ids.filter(id => session.results[id]);
   const correct = gradedIds.filter(id => session.results[id].isCorrect).length;
   const score = total > 0 ? Math.round((correct / gradedIds.length || 0) * 100) : 0;
+  const totalTimeSec = gradedIds.reduce((sum, id) => sum + (session.results[id].timeSpent || 0), 0);
+  const avgTimeSec = gradedIds.length > 0 ? totalTimeSec / gradedIds.length : 0;
 
   const entry = {
     id: Date.now(),
@@ -534,6 +595,8 @@ function finishSession() {
     score,
     ids: session.ids,
     results: session.results,
+    totalTimeSec,
+    avgTimeSec,
   };
   const history = loadHistory();
   history.push(entry);
@@ -547,6 +610,15 @@ function renderResult(entry) {
   showView(viewResult);
   resultScore.textContent = `${entry.score}%`;
   resultText.textContent = `${MODE_LABELS[entry.mode] || entry.mode} · ${entry.correct} / ${entry.total} 문제 정답`;
+
+  if (entry.avgTimeSec != null) {
+    const withinTarget = entry.avgTimeSec <= TARGET_SEC_PER_QUESTION;
+    resultTimeText.textContent = `⏱ 총 ${formatDuration(entry.totalTimeSec)} · 평균 ${formatDuration(entry.avgTimeSec)}/문제 (목표 ${formatDuration(TARGET_SEC_PER_QUESTION)}/문제)`;
+    resultTimeText.className = "result-time " + (withinTarget ? "good" : "bad");
+  } else {
+    resultTimeText.textContent = "";
+    resultTimeText.className = "result-time";
+  }
 
   const wrongIds = entry.ids.filter(id => !entry.results[id] || !entry.results[id].isCorrect);
   reviewWrongBtn.hidden = wrongIds.length === 0;
@@ -564,6 +636,9 @@ function renderResult(entry) {
     const optionsKoHtml = getOptionsKoList(q)
       .map(({ letter, text }) => `<li><b>${letter}.</b> ${text}</li>`)
       .join("");
+    const timeLineHtml = (r && r.timeSpent != null)
+      ? `<div class="rd-answer-line"><b>풀이 시간:</b> <span class="${r.timeSpent <= TARGET_SEC_PER_QUESTION ? "time-good" : "time-bad"}">${formatDuration(r.timeSpent)}</span> (목표 ${formatDuration(TARGET_SEC_PER_QUESTION)})</div>`
+      : "";
 
     const item = document.createElement("div");
     item.className = "result-detail-item";
@@ -575,6 +650,7 @@ function renderResult(entry) {
       <div class="rd-body">
         <div class="rd-answer-line"><b>내 답:</b> ${selected.length ? selected.join(", ") : "(미응답)"}</div>
         <div class="rd-answer-line"><b>정답:</b> ${q.answer.join(", ")}</div>
+        ${timeLineHtml}
         <div class="keyword-row">
           <span class="keyword-tag kw-q"><b>문제 키워드</b> ${q.kw_q || "-"}</span>
           <span class="keyword-tag kw-a"><b>답변 키워드</b> ${q.kw_a || "-"}</span>

@@ -83,6 +83,7 @@
     <div class="question-card">
       <div class="question-meta">
         <span id="qBadge" class="badge"></span>
+        <span id="questionTimer" class="question-timer">⏱ 0:00</span>
         <span id="qMultiHint" class="hint" hidden>※ 정답이 2개 이상입니다. 모두 선택하세요.</span>
       </div>
       <h2 id="qText" class="q-text"></h2>
@@ -93,6 +94,7 @@
         <div class="keyword-row">
           <span class="keyword-tag kw-q"><b>문제 키워드</b> <span id="feedbackKwQ"></span></span>
           <span class="keyword-tag kw-a"><b>답변 키워드</b> <span id="feedbackKwA"></span></span>
+          <span class="keyword-tag" id="feedbackTimeTag"><b>풀이 시간</b> <span id="feedbackTimeValue"></span></span>
         </div>
         <div class="feedback-explanation">
           <h3>문제 (한글)</h3>
@@ -119,6 +121,7 @@
         <span id="resultScore">0%</span>
       </div>
       <p id="resultText"></p>
+      <p id="resultTimeText" class="result-time"></p>
     </div>
     <div class="result-actions">
       <button id="reviewWrongBtn" class="btn-primary" hidden>이 시험의 오답만 다시 풀기</button>
