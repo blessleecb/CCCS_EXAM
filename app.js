@@ -200,6 +200,11 @@ const examCountDesc = document.getElementById("examCountDesc");
 const randomCountDesc = document.getElementById("randomCountDesc");
 const allCountDesc = document.getElementById("allCountDesc");
 
+const dailyStatsCard = document.getElementById("dailyStatsCard");
+const statsModal = document.getElementById("statsModal");
+const statsModalCloseBtn = document.getElementById("statsModalCloseBtn");
+const statsTableBody = document.getElementById("statsTableBody");
+
 const progressText = document.getElementById("progressText");
 const progressFill = document.getElementById("progressFill");
 const liveScore = document.getElementById("liveScore");
@@ -278,7 +283,51 @@ function renderHome() {
   }
 }
 
-document.querySelectorAll(".mode-card").forEach(card => {
+/* ===================== Daily stats ===================== */
+function computeDailyStats() {
+  const byDate = {};
+  loadHistory().forEach(entry => {
+    const dt = new Date(entry.date);
+    const dateKey = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+    if (!byDate[dateKey]) byDate[dateKey] = { date: dateKey, sessions: 0, total: 0, correct: 0 };
+    byDate[dateKey].sessions += 1;
+    byDate[dateKey].total += entry.total;
+    byDate[dateKey].correct += entry.correct;
+  });
+  return Object.values(byDate)
+    .map(row => ({ ...row, rate: row.total > 0 ? Math.round((row.correct / row.total) * 100) : 0 }))
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function renderStatsModal() {
+  const rows = computeDailyStats();
+  if (rows.length === 0) {
+    statsTableBody.innerHTML = '<tr><td colspan="5" class="empty-msg">아직 응시 기록이 없습니다.</td></tr>';
+    return;
+  }
+  statsTableBody.innerHTML = rows.map(row => `
+    <tr>
+      <td>${row.date}</td>
+      <td>${row.sessions}</td>
+      <td>${row.total}</td>
+      <td>${row.correct}</td>
+      <td class="${row.rate >= 70 ? "rate-good" : "rate-bad"}">${row.rate}%</td>
+    </tr>
+  `).join("");
+}
+
+dailyStatsCard.addEventListener("click", () => {
+  renderStatsModal();
+  statsModal.hidden = false;
+});
+statsModalCloseBtn.addEventListener("click", () => {
+  statsModal.hidden = true;
+});
+statsModal.addEventListener("click", (e) => {
+  if (e.target === statsModal) statsModal.hidden = true;
+});
+
+document.querySelectorAll(".mode-card[data-mode]").forEach(card => {
   card.addEventListener("click", () => {
     const mode = card.dataset.mode;
     if (mode === "wrong") {

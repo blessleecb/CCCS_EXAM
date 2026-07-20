@@ -274,3 +274,58 @@ body {
 .rd-answer-line b { color: var(--text); }
 .time-good { color: var(--good); font-weight: 600; }
 .time-bad { color: var(--bad); font-weight: 600; }
+
+/* ---------- Daily stats modal ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+.modal-overlay[hidden] { display: none; }
+.modal-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 640px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.modal-header h2 { margin: 0; font-size: 20px; }
+.stats-table-wrap { overflow-y: auto; }
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.stats-table th, .stats-table td {
+  padding: 10px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+}
+.stats-table th:first-child, .stats-table td:first-child { text-align: left; }
+.stats-table th {
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+}
+.stats-table td.rate-good { color: var(--good); font-weight: 700; }
+.stats-table td.rate-bad { color: var(--bad); font-weight: 700; }

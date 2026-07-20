@@ -51,6 +51,11 @@
         <div class="mode-title">Weak Point</div>
         <div class="mode-desc"><span id="weakThresholdDesc">2</span>회 이상 틀린 문제만 모아 풀기<br><span id="weakCount">0</span>문제</div>
       </button>
+      <button class="mode-card" id="dailyStatsCard">
+        <div class="mode-icon">📊</div>
+        <div class="mode-title">일별 통계</div>
+        <div class="mode-desc">날짜별 풀이 문제 수와<br>정답률을 확인</div>
+      </button>
     </div>
 
     <section class="history-section">
@@ -129,6 +134,30 @@
     </div>
     <div id="resultDetailList" class="result-detail-list"></div>
   </section>
+
+  <!-- ===================== DAILY STATS MODAL ===================== -->
+  <div id="statsModal" class="modal-overlay" hidden>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>일별 통계</h2>
+        <button id="statsModalCloseBtn" class="btn-ghost">닫기</button>
+      </div>
+      <div id="statsTableWrap" class="stats-table-wrap">
+        <table class="stats-table">
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th>응시 횟수</th>
+              <th>푼 문제 수</th>
+              <th>맞힌 문제 수</th>
+              <th>정답률</th>
+            </tr>
+          </thead>
+          <tbody id="statsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
 </div>
 
