@@ -206,6 +206,8 @@ const statsModalCloseBtn = document.getElementById("statsModalCloseBtn");
 const statsTableBody = document.getElementById("statsTableBody");
 
 const finishHereBtn = document.getElementById("finishHereBtn");
+const pauseBtn = document.getElementById("pauseBtn");
+const pauseOverlay = document.getElementById("pauseOverlay");
 const progressText = document.getElementById("progressText");
 const progressFill = document.getElementById("progressFill");
 const liveScore = document.getElementById("liveScore");
@@ -401,6 +403,11 @@ function getTimerClass(elapsedSec) {
   if (elapsedSec >= TARGET_SEC_PER_QUESTION * 0.7) return "timer-warn";
   return "";
 }
+function getElapsedSeconds() {
+  if (!session || !session.questionStartTime) return 0;
+  const pausedMs = (session.totalPausedMs || 0) + (session.isPaused ? Date.now() - session.pauseStartedAt : 0);
+  return Math.max(0, (Date.now() - session.questionStartTime - pausedMs) / 1000);
+}
 function updateQuestionTimerDisplay(elapsedSec) {
   questionTimerEl.textContent = `⏱ ${formatDuration(elapsedSec)}`;
   questionTimerEl.className = "question-timer " + getTimerClass(elapsedSec);
@@ -409,15 +416,44 @@ function startQuestionTimer() {
   stopQuestionTimer();
   questionTimerEl.hidden = false;
   session.questionStartTime = Date.now();
+  session.totalPausedMs = 0;
+  session.isPaused = false;
+  session.pauseStartedAt = null;
+  pauseBtn.textContent = "⏸ 일시정지";
+  pauseOverlay.hidden = true;
   updateQuestionTimerDisplay(0);
   questionTimerHandle = setInterval(() => {
-    updateQuestionTimerDisplay((Date.now() - session.questionStartTime) / 1000);
+    updateQuestionTimerDisplay(getElapsedSeconds());
   }, 1000);
 }
 function stopQuestionTimer() {
   if (questionTimerHandle) {
     clearInterval(questionTimerHandle);
     questionTimerHandle = null;
+  }
+}
+function togglePause() {
+  if (!session) return;
+  if (session.isPaused) {
+    session.totalPausedMs = (session.totalPausedMs || 0) + (Date.now() - session.pauseStartedAt);
+    session.isPaused = false;
+    session.pauseStartedAt = null;
+    pauseBtn.textContent = "⏸ 일시정지";
+    pauseOverlay.hidden = true;
+    questionTimerEl.classList.remove("timer-paused");
+    if (session.questionStartTime && !session.results[currentQuestion().id]) {
+      stopQuestionTimer();
+      questionTimerHandle = setInterval(() => {
+        updateQuestionTimerDisplay(getElapsedSeconds());
+      }, 1000);
+    }
+  } else {
+    session.isPaused = true;
+    session.pauseStartedAt = Date.now();
+    stopQuestionTimer();
+    pauseBtn.textContent = "▶ 계속하기";
+    pauseOverlay.hidden = false;
+    questionTimerEl.classList.add("timer-paused");
   }
 }
 
@@ -431,6 +467,9 @@ function startSession(mode, ids) {
     results: {},    // qid -> {selected, isCorrect, timeSpent}
     immediate: mode !== "exam",
     questionStartTime: null,
+    isPaused: false,
+    pauseStartedAt: null,
+    totalPausedMs: 0,
   };
   finishHereBtn.hidden = mode !== "all";
   showView(viewQuiz);
@@ -539,7 +578,7 @@ function gradeCurrent() {
   const q = currentQuestion();
   const sel = session.selected[q.id] || [];
   const isCorrect = sameSet(sel, q.answer);
-  const timeSpent = session.questionStartTime ? (Date.now() - session.questionStartTime) / 1000 : 0;
+  const timeSpent = getElapsedSeconds();
   stopQuestionTimer();
   session.results[q.id] = { selected: sel, isCorrect, timeSpent };
   updateWrongSet(q.id, isCorrect);
@@ -625,6 +664,10 @@ document.getElementById("quitQuizBtn").addEventListener("click", () => {
     renderHome();
     showView(viewHome);
   }
+});
+
+pauseBtn.addEventListener("click", () => {
+  togglePause();
 });
 
 finishHereBtn.addEventListener("click", () => {

@@ -78,6 +78,7 @@
   <section id="view-quiz" class="view" hidden>
     <div class="quiz-topbar">
       <button id="quitQuizBtn" class="btn-ghost">← 그만두기</button>
+      <button id="pauseBtn" class="btn-ghost">⏸ 일시정지</button>
       <button id="finishHereBtn" class="btn-ghost" hidden>여기까지 저장</button>
       <div class="quiz-progress">
         <span id="progressText">1 / 60</span>
@@ -115,6 +116,10 @@
       <div class="quiz-actions">
         <button id="submitBtn" class="btn-primary">제출</button>
         <button id="nextBtn" class="btn-primary" hidden>다음 문제</button>
+      </div>
+
+      <div id="pauseOverlay" class="pause-overlay" hidden>
+        <div class="pause-overlay-text">⏸ 일시정지됨<br><span>다시 시작하려면 "계속하기"를 눌러주세요</span></div>
       </div>
     </div>
   </section>

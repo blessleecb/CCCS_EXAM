@@ -157,6 +157,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 28px;
+  position: relative;
 }
 .question-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .badge {
@@ -171,6 +172,33 @@ body {
 .question-timer { font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .question-timer.timer-warn { color: #ffb84f; font-weight: 600; }
 .question-timer.timer-over { color: var(--bad); font-weight: 700; }
+.question-timer.timer-paused { color: var(--text-dim); opacity: .6; }
+
+.pause-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 20, 32, .88);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 10;
+}
+.pause-overlay[hidden] { display: none; }
+.pause-overlay-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.6;
+}
+.pause-overlay-text span {
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
 .q-text { font-size: 18px; line-height: 1.6; margin: 0 0 20px; white-space: pre-wrap; }
 
 .options-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
