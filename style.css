@@ -69,11 +69,14 @@ body {
   flex-wrap: wrap;
   font-size: 13px;
   color: var(--text-dim);
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 .pool-status b { color: var(--text); }
 .pool-sep { opacity: .5; }
 .pool-status .btn-ghost { margin-left: 6px; padding: 4px 10px; font-size: 12px; }
+.pool-status.overall-stats { margin-bottom: 24px; }
+.rate-value.rate-good { color: var(--good); }
+.rate-value.rate-bad { color: var(--bad); }
 
 .history-section { margin-top: 20px; }
 .history-header {

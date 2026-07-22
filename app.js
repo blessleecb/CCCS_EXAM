@@ -194,6 +194,8 @@ const poolCountEl = document.getElementById("poolCount");
 const poolTotalEl = document.getElementById("poolTotal");
 const attemptedCountEl = document.getElementById("attemptedCount");
 const masteredCountEl = document.getElementById("masteredCount");
+const totalSolvedCountEl = document.getElementById("totalSolvedCount");
+const overallAccuracyRateEl = document.getElementById("overallAccuracyRate");
 const weakCountEl = document.getElementById("weakCount");
 const weakThresholdDescEl = document.getElementById("weakThresholdDesc");
 const examCountDesc = document.getElementById("examCountDesc");
@@ -259,6 +261,12 @@ function renderHome() {
   weakThresholdDescEl.textContent = WEAK_THRESHOLD;
   weakCountEl.textContent = getWeakIds().length;
 
+  const overall = computeOverallStats();
+  totalSolvedCountEl.textContent = overall.total;
+  overallAccuracyRateEl.textContent = `${overall.rate}%`;
+  overallAccuracyRateEl.classList.remove("rate-good", "rate-bad");
+  overallAccuracyRateEl.classList.add(overall.rate >= 70 ? "rate-good" : "rate-bad");
+
   const history = loadHistory();
   if (history.length === 0) {
     historyListEl.innerHTML = '<p class="empty-msg">아직 응시 기록이 없습니다.</p>';
@@ -284,6 +292,17 @@ function renderHome() {
       historyListEl.appendChild(div);
     });
   }
+}
+
+/* ===================== Overall stats ===================== */
+function computeOverallStats() {
+  let total = 0;
+  let correct = 0;
+  loadHistory().forEach(entry => {
+    total += entry.total;
+    correct += entry.correct;
+  });
+  return { total, correct, rate: total > 0 ? Math.round((correct / total) * 100) : 0 };
 }
 
 /* ===================== Daily stats ===================== */
