@@ -177,6 +177,7 @@ const MODE_LABELS = {
   wrong: "오답노트",
   review: "오답 복습",
   weak: "Weak Point",
+  mastered: "마스터 복습",
 };
 
 /* ===================== App state ===================== */
@@ -198,6 +199,7 @@ const totalSolvedCountEl = document.getElementById("totalSolvedCount");
 const overallAccuracyRateEl = document.getElementById("overallAccuracyRate");
 const weakCountEl = document.getElementById("weakCount");
 const weakThresholdDescEl = document.getElementById("weakThresholdDesc");
+const masteredReviewCountEl = document.getElementById("masteredReviewCount");
 const examCountDesc = document.getElementById("examCountDesc");
 const randomCountDesc = document.getElementById("randomCountDesc");
 const allCountDesc = document.getElementById("allCountDesc");
@@ -260,6 +262,7 @@ function renderHome() {
   attemptedCountEl.textContent = getAttemptedIdSet().size;
   weakThresholdDescEl.textContent = WEAK_THRESHOLD;
   weakCountEl.textContent = getWeakIds().length;
+  masteredReviewCountEl.textContent = masteredCount;
 
   const overall = computeOverallStats();
   totalSolvedCountEl.textContent = overall.total;
@@ -369,6 +372,15 @@ document.querySelectorAll(".mode-card[data-mode]").forEach(card => {
         return;
       }
       startSession("weak", shuffle(ids));
+      return;
+    }
+    if (mode === "mastered") {
+      const ids = Array.from(getMasteredIdSet());
+      if (ids.length === 0) {
+        alert(`마스터한 문제가 없습니다. 같은 문제를 연속 ${MASTERY_THRESHOLD}회 맞히면 자동으로 여기에 쌓입니다.`);
+        return;
+      }
+      startSession("mastered", shuffle(ids));
       return;
     }
     const poolIds = getPoolIds();
